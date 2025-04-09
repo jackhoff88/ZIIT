@@ -1,0 +1,113 @@
+1.Create user
+a)PS:
+New-ADUser  -GivenName "Michal" -Surname "Polbud" -Name "Michal Polbud" -UserPrincipalName "michal.polbud@contoso.internal" -SamAccountName "mpolbud" -Path "OU=Poland,DC=contoso,DC=internal" -DisplayName "Michal Polbud" -AccountPassword (ConvertTo-SecureString "User_123" -AsPlainText -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $false -CannotChangePassword $false -PassThru
+b)cmd:
+dsadd user "CN=Marcus Gueseppe,OU=Rome,OU=Italy,DC=contoso,DC=internal" -samid mgueseppe -upn marcus.gueseppe@contoso.internal -fn Marcus -ln Gueseppe -display "Marcus Gueseppe" -pwd User_123 -disabled no
+dsadd succeeded:CN=Marcus Gueseppe,OU=Rome,OU=Italy,DC=contoso,DC=internal
+2.Modify user
+a)PS:
+Set-ADuser -Identity "mpolbud" -MobilePhone 123456789
+b)cmd:
+dsmod user "CN=Marcus Gueseppe,OU=Rome,OU=Italy,DC=contoso,DC=internal" -mobile 123456789
+
+3.Find users
+a)PS:
+Get-ADUser -Filter "Enabled -eq $false"
+b)cmd:
+
+4.Create group
+a)PS:
+New-ADGroup -Name "KOSBUD" -Path "OU=Poland,DC=contoso,DC=internal" -GroupScope Global
+b)cmd:
+dsadd group "CN=ROBSONN,OU="Poland",DC=contoso,DC=internal" -scope u
+
+5.Mod Group
+a)PS:
+Add-ADGroupMember -Identity "KOSBUD" -Members "POLBUD"
+Add-ADGroupMember -Identity "KOSBUD" -Members "Tomasz Szufla"
+b)cmd:
+dsmod group "CN=KOSBUD,DC=contoso",DC="internal" -addmbr "CN=POLBUD,DC=contoso,DC=internal"
+dsmod group "CN=KOSBUD,DC=contoso",DC="internal" -addmbr "CN=Tomasz Szufla,DC=contoso,DC=internal"
+
+6.Usuwanie dysków sieciowych.
+net use T: \\dc1\reports-simple
+net use /d T:
+
+7.Tworzenie i udostępnianie folderów
+a) Tworzenie:
+New-Item C:\reports-ps -Type Directory
+
+b) Udostępnianie:
+New-SMBShare -Name "reports-powershell" -Path c:\reports-ps -FullAccess "G_Sweden_Marketing" -ReadAccess "G_Sweden_Sales"
+
+c) Sćieżka do dysku sieciowego:
+New-PSDrive -Name R -PSProvider FileSystem -Root "\\dc1\reports-powershell" -Persist
+
+8. Powershell - skrypty:
+
+HELP:
+Get-Help <polecenie> [-Examples | -Full | -Online]
+• Get-Command <fragmentpolecenia> – możesz używać wieloznaczników , np. net*
+• Update-Help
+
+Uruchamianie skryptów:
+cd $env:USERPROFILE\Documents
+.\witaj.ps1
+
+Polityka uruchamiania skryptów:
+Get-ExecutionPolicy
+Set-ExecutionPolicy Default
+
+Sposoby przekazywania zmiennej:
+.\witaj.ps1 Ania
+.\witaj.ps1 -Imie Ania
+
+Skrypt ze zeminnymi:
+param($Imie, [Int]$Ile=1)
+
+for($i=1; $i -le $($Ile); $i++){
+    if(!$Imie){
+        Write-Host "Witaj nieznajomy"
+    }else{
+        Write-Host "Witaj $($Imie)!"
+    }
+}
+
+Formatowanie wyników:
+Get-Process | Format-List
+Get-Process | Format-List cpu,name
+
+Get-Process | Where ProcessName -ge "notepad" | Sort ProcessName
+
+Get-Process | Where ProcessName -like "*yst*" | Sort ProcessName
+
+-lt, -le, -gt, -ge
+
+Get-Process | Where ProcessName -like "*yst*" | Sort -Descending
+
+ctrl+space
+
+Get-Process | Where CPU -gt 0.01 | Sort -Descending
+
+Get-Process | Where { $_.ProcessName -ge "notepad" -and $_.CPU -le 0.5| Sort ProcessName }
+
+Get-Process | Where { $_.ProcessName -ge "notepad" -and $_.CPU -le 0.5| Sort ProcessName } | ConvertTo-Html | Out-File processes.html
+
+Get-Process -ComputerName DC1
+
+Sprawdzanie atrybutów:
+$notes | Get-Member
+
+Zamykanie procesów:
+Stop-Process -Name notep* -Confirm
+Stop-Process -Name notep* -WhatIf
+
+Hurtowe zakładnie kont:
+1.Utwórz plik users.csv:
+FirstName,LastName,Department,Path
+Ania,Testowa,IT,"OU=aaa,DC=bbb,DC=ccc"
+2. Utwórz skrypt createusers.ps1:
+$users=Import-CSV users.csv
+Foreach ($i in $users) {
+Write-Host "Name: "$i.FirstName
+}
